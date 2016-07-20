@@ -140,32 +140,109 @@ void InitRadioByID(const FunctionCallbackInfo<Value>& args) {
   
   // Open the device
   r = rtlsdr_open(&AppData._dev, (uint32_t)AppData._devIndex); 
-  if(r >= 0) {
-    // Set Gain Level
-    if(AppData._autoGainEnabled) {
-      rtlsdr_set_tuner_gain_mode(AppData._dev, 0);
-      AppData._gain = -100;
-    }
-    else { // Set Max Gain
-      int numGains;
-      int gains[100];
-      numGains = rtlsdr_get_tuner_gains(AppData._dev, gains);
-      AppData._gain = gains[numGains - 1];
-      rtlsdr_set_tuner_gain(AppData._dev, AppData._gain);
-    }
-    
-    // set 0 frequency correction
-    rtlsdr_set_freq_correction(AppData._dev, 0);
-    
-    rtlsdr_set_center_freq(AppData._dev, 1090000000); // 1090 MHz
-    rtlsdr_set_sample_rate(AppData._dev, 2000000); // 2 MHz
-    rtlsdr_reset_buffer(AppData._dev);
-    args.GetReturnValue().Set(true);
-  }
-  else {
-    fprintf(stderr, "Error opening the RTLSDR device: %s\n", strerror(errno));
+  if(r != 0) {
+    std::cerr << "Error opening the RTLSDR device: " 
+              << strerror(errno) << std::endl;
     args.GetReturnValue().Set(false);
+    return;
   }
+  
+  // Set Gain Level
+  if(AppData._autoGainEnabled) {
+    r = rtlsdr_set_tuner_gain_mode(AppData._dev, 0);
+    if(r != 0) {
+      std::cerr << "Error setting automatic gain mode: "
+                << strerror(errno) << std::endl;
+      args.GetReturnValue().Set(false);
+      initAppData();
+      return;
+    }
+    AppData._gain = -100;
+  }
+  else { // Set Max Gain
+    int numGains;
+    int gains[100];
+      
+    // Get available gain values
+    numGains = rtlsdr_get_tuner_gains(AppData._dev, gains);
+    if(numGains <= 0) {
+      std::cerr << "Error getting list of supported gains:"
+                << strerror(errno) << std::endl;
+        
+      args.GetReturnValue().Set(false);
+      initAppData();
+      return;     
+    }
+      
+    // Choose the Maximum gain level
+    AppData._gain = gains[numGains - 1];
+      
+    // Set manual gain mode
+    r = rtlsdr_set_tuner_gain_mode(AppData._dev, 1);
+    if(r != 0) {
+      std::cerr << "Error setting manual gain mode: "
+                << strerror(errno) << std::endl;
+      args.GetReturnValue().Set(false);
+      initAppData();
+      return;
+    }
+      
+    // Set manual gain value
+    r = rtlsdr_set_tuner_gain(AppData._dev, AppData._gain);
+    if(r != 0) {
+      std::cerr << "Error setting tuner gain value: "
+                << strerror(errno) << std::endl;
+      args.GetReturnValue().Set(false);
+      initAppData();
+      return;
+    }
+  }
+    
+  // set 0 frequency correction
+  r = rtlsdr_set_freq_correction(AppData._dev, 0);
+  /*
+  if(r != 0) {
+    std::cerr << "Error setting frequency correction: "
+              << strerror(errno) << std::endl;
+    args.GetReturnValue().Set(false);
+    initAppData();
+    return;
+  }
+  */
+  
+  // set frequency to 1090 MHz for ADS-B
+  r = rtlsdr_set_center_freq(AppData._dev, 1090000000); // 1090000000Hz=1090MHz
+  if(r != 0) {
+    std::cerr << "Error setting frequency value: "
+              << strerror(errno) << std::endl;
+    args.GetReturnValue().Set(false);
+    initAppData();
+    return;
+  }  
+  
+  // set sample rate. We'll use 2 MHz as a nice even number, since RTLSDR_API
+  // says we'll start getting sample loss if we go over 2.4 MHz
+  r = rtlsdr_set_sample_rate(AppData._dev, 2000000); // 2000000Hz = 2MHz
+  if(r != 0) {
+    std::cerr << "Error setting sample rate: "
+              << strerror(errno) << std::endl;
+    args.GetReturnValue().Set(false);
+    initAppData();
+    return;
+  }
+  
+  // Reset the streaming buffer
+  r = rtlsdr_reset_buffer(AppData._dev);
+  if(r != 0) {
+    std::cerr << "Error resetting buffer: "
+              << strerror(errno) << std::endl;
+    args.GetReturnValue().Set(false);
+    initAppData();
+    return;
+  }
+  
+  // Everything is configured, return TRUE
+  args.GetReturnValue().Set(true);
 }
 
 /**

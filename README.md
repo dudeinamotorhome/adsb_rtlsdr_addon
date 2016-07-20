@@ -27,11 +27,12 @@ You'll need node-gyp:
 To build:
 
 `node-gyp configure`
+
 `node-gyp build`
 
 Note that it dynamically links with librtlsdr.so, so that will need to be available in your ldconfig path.
 
-## Node.JS API
+## Node.js API
 
 | Function | Description | Return Value | Arguments |
 |:---------|:------------|:-------------|:----------|
