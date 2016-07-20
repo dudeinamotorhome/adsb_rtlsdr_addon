@@ -14,8 +14,8 @@
 
 // system headers
 #include <pthread.h>
-#include <string.h>
 #include <errno.h>
+#include <string.h>
 #include <iostream>
 
 // node-gyp headers
@@ -200,6 +200,7 @@ void InitRadioByID(const FunctionCallbackInfo<Value>& args) {
     
   // set 0 frequency correction
   r = rtlsdr_set_freq_correction(AppData._dev, 0);
+  /// @todo why does this fail? Is it because it is already 0?
   /*
   if(r != 0) {
     std::cerr << "Error setting frequency correction: "
@@ -211,7 +212,8 @@ void InitRadioByID(const FunctionCallbackInfo<Value>& args) {
   */
   
   // set frequency to 1090 MHz for ADS-B
-  r = rtlsdr_set_center_freq(AppData._dev, 1090000000); // 1090000000Hz=1090MHz
+  AppData._freq = 1090000000; // 1090000000Hz = 1090MHz
+  r = rtlsdr_set_center_freq(AppData._dev, AppData._freq); 
   if(r != 0) {
     std::cerr << "Error setting frequency value: "
               << strerror(errno) << std::endl;
@@ -259,12 +261,38 @@ void GetGainSettings(const FunctionCallbackInfo<Value>& args) {
   Local<Object> gainSettings = Object::New(isolate);
   gainSettings->Set(String::NewFromUtf8(isolate, "autoGainEnabled"),
                     Boolean::New(isolate, AppData._autoGainEnabled));
-  gainSettings->Set(String::NewFromUtf8(isolate, "gainSetting"),
+  gainSettings->Set(String::NewFromUtf8(isolate, "gainSettingInTenths_dB"),
                     Int32::New(isolate, AppData._gain));
-  gainSettings->Set(String::NewFromUtf8(isolate, "deviceGain"),
-                    Number::New(isolate, rtlsdr_get_tuner_gain(AppData._dev)/10.0));
+  gainSettings->Set(String::NewFromUtf8(isolate, "deviceGainIn_dB"),
+                    Number::New(
+                      isolate,
+                      rtlsdr_get_tuner_gain(AppData._dev)/10.0));
   
   args.GetReturnValue().Set(gainSettings);
+}
+
+/**
+  void GetFreqSettings(const FunctionCallbackInfo<Value>& args)
+  
+  @brief Returns all the Frequency settings for the radio.
+  
+  @return JSON 
+*/
+void GetFreqSettings(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = Isolate::GetCurrent();
+  HandleScope scope(isolate);
+  
+  Local<Object> freqSettings = Object::New(isolate);
+  freqSettings->Set(String::NewFromUtf8(isolate, "freqSettingsInHz"),
+                    Int32::New(isolate, AppData._freq));
+  freqSettings->Set(String::NewFromUtf8(isolate, "deviceFreqInHz"),
+                    Int32::New(isolate, rtlsdr_get_center_freq(AppData._dev)));
+  freqSettings->Set(String::NewFromUtf8(isolate, "deviceFreqCorrectionInPPM"),
+                    Int32::New(
+                      isolate,
+                      rtlsdr_get_freq_correction(AppData._dev)));
+  
+  args.GetReturnValue().Set(freqSettings);                  
 }
 
 /**
@@ -296,6 +324,7 @@ void init(Local<Object> exports) {
   NODE_SET_METHOD(exports, "getRadioList", GetRadioList);
   NODE_SET_METHOD(exports, "initRadioByID", InitRadioByID);
   NODE_SET_METHOD(exports, "getGainSettings", GetGainSettings);
+  NODE_SET_METHOD(exports, "getFreqSettings", GetFreqSettings);
   NODE_SET_METHOD(exports, "closeRadio", CloseRadio);
 }
 

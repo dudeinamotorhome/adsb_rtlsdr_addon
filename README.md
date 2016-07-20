@@ -2,7 +2,7 @@
 
 A Node.js native addon to decode aircraft ADS-B transmissions using a RTL-SDR USB receiver.
 
-Built on a BeagleBoneBlack, Debian 8.5, Kernel 4.4-9-ti-r25.
+Built on a BeagleBoneBlack, Debian 8.5, Kernel 4.4-9-ti-r25, librtlsdr 0.5.3-3.
 
 ## Build Setup
 
@@ -38,9 +38,9 @@ Note that it dynamically links with librtlsdr.so, so that will need to be availa
 |:---------|:------------|:-------------|:----------|
 | `getRadioList()` | Returns a list of all radios librtlsdr detects, using a combination of `rtlsdr_get_device_count()` and `rtlsdr_get_device_usb_strings()`.| An array of objects, with each object containing: `id`, `vendor`, `product`, `serial`.  If no devices are found the list will be empty.| None. |
 | `initRadioByID(Int32, Boolean)` | Initializes specified radio, setting gain and frequency values. | Boolean - True if radio is initialized, otherwise false. | Int32 for the radio id; Boolean for enabling autogain (if false it will use the max available gain). |
-| `getGainSettings()` | Returns the gain settings on the radio. | An array of objects: `autoGainEnabled`, `gainSetting`, `deviceGain`. | None. |
+| `getGainSettings()` | Returns the gain settings on the radio. | An array of objects: `autoGainEnabled`, `gainSettingInTenths_dB`, `deviceGainIn_dB`. | None. |
+| `getFreqSettings()` | Returns the frequency settings on the radio. | An array of objects: `freqSettingsInHz`, `deviceFreqInHz`, `deviceFreqCorrectionInPPM`. | None. |
 | `closeRadio()` | Closes the radio device. | None. | None. |
-
 
 ## License
 
