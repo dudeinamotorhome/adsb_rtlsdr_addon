@@ -30,11 +30,16 @@ using namespace v8;
 
 // Global Application Data
 typedef struct {
+  bool _radioInitialized;
+  
+  // Radio data
   rtlsdr_dev_t *_dev;
   int _devIndex;
   bool _autoGainEnabled;
   int _gain;
   int _freq;
+  
+  
 } AppData_t;
 
 AppData_t AppData;
@@ -46,9 +51,9 @@ AppData_t AppData;
   close it.
 */
 void initAppData() {
-  // std::cout << "initAppData()" << std::endl;
+  std::cout << "initAppData()" << std::endl;
   if(AppData._dev) {
-    // std::cout << "rtlsdr_close()" << std::endl;
+    std::cout << "rtlsdr_close()" << std::endl;
     rtlsdr_close(AppData._dev);
   }
   AppData._dev = NULL;
@@ -56,6 +61,12 @@ void initAppData() {
   AppData._autoGainEnabled = false;
   AppData._gain = 0;
   AppData._freq = 0;
+  
+  AppData._radioInitialized = false;
+}
+
+static void atExit(void *arg) {
+  initAppData();
 }
 
 /**
@@ -244,6 +255,7 @@ void InitRadioByID(const FunctionCallbackInfo<Value>& args) {
   }
   
   // Everything is configured, return TRUE
+  AppData._radioInitialized = true;
   args.GetReturnValue().Set(true);
 }
 
@@ -295,6 +307,19 @@ void GetFreqSettings(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(freqSettings);                  
 }
 
+void RegisterCallback(const FunctionCallbackInfo<Value>& args) {
+  
+}
+
+void StartRadio(const FunctionCallbackInfo<Value>& args) {
+  
+}
+
+void GetAircraftData(const FunctionCallbackInfo<Value>& args) {
+  
+}
+
+
 /**
   void CloseRadio(const FunctionCallbackInfo<Value>& args)
   
@@ -325,7 +350,12 @@ void init(Local<Object> exports) {
   NODE_SET_METHOD(exports, "initRadioByID", InitRadioByID);
   NODE_SET_METHOD(exports, "getGainSettings", GetGainSettings);
   NODE_SET_METHOD(exports, "getFreqSettings", GetFreqSettings);
+  NODE_SET_METHOD(exports, "registerCallback", RegisterCallback);
+  NODE_SET_METHOD(exports, "startRadio", StartRadio);
+  NODE_SET_METHOD(exports, "getAircraftData", GetAircraftData);
   NODE_SET_METHOD(exports, "closeRadio", CloseRadio);
+  
+  AtExit(atExit);
 }
 
 // define node-gyp entry point

@@ -12,4 +12,4 @@ console.log('Gain Settings:\n' + JSON.stringify(gainSettings));
 var freqSettings = adsb.getFreqSettings();
 console.log('Freq Settings:\n' + JSON.stringify(freqSettings));
 
-adsb.closeRadio();
+//adsb.closeRadio();

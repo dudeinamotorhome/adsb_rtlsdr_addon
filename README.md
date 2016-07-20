@@ -2,9 +2,11 @@
 
 A Node.js native addon to decode aircraft ADS-B transmissions using a RTL-SDR USB receiver.
 
-Built on a BeagleBoneBlack, Debian 8.5, Kernel 4.4-9-ti-r25, librtlsdr 0.5.3-3.
+Built on a BeagleBoneBlack, Debian 8.5, Kernel 4.4-9-ti-r25, librtlsdr 0.5.3-3, Node v6.3.0, node-gyp v3.4.0
 
-## Build Setup
+## Prerequisites
+
+### librtlsdr
 
 You will need to install librtlsdr-dev:
 
@@ -18,7 +20,17 @@ There are also a set of rtl-sdr apps that you can use to test your radio that I 
 
 You can run `rtl_test -t` to test out your radio.
 
-You'll need node-gyp:
+### Node 6.x
+
+The BeagleBone debian image I was using has an old version of node.  To update:
+
+`curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -`
+
+`apt-get install nodejs`
+
+### node-gyp
+
+You'll need node-gyp to compile the addon:
 
 `npm install node-gyp -g`
 
